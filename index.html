@@ -1,0 +1,1362 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#ffffff">
+<title>Como Avaliar o Progresso do Estudante? — CPAN-UFMS</title>
+<style>
+:root {
+  --ink: #0f172a;
+  --muted: #334155;
+  --blue: #1d4ed8;
+  --cyan: #0284c7;
+  --pale: #f0f6ff;
+  --line: #cbd5e1;
+  --green: #15803d;
+  --red: #b91c1c;
+  --emerald: #10b981;
+  --emerald-dark: #059669;
+  --emerald-soft: #ecfdf5;
+  --amber: #d97706;
+  --amber-soft: #fffbeb;
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #030712;
+  color: var(--ink);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+#viewport {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: #030712;
+  touch-action: none;
+}
+#canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  transform-origin: 0 0;
+  will-change: transform;
+  transition: transform 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+}
+#connections {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 45000px;
+  height: 10000px;
+  pointer-events: none;
+  z-index: 0;
+}
+.slide {
+  position: absolute;
+  width: 1280px;
+  height: 720px;
+  left: 0;
+  top: 0;
+  transform: translate(var(--x), var(--y));
+  background: #ffffff;
+  border: 2px solid #e2e8f0;
+  border-radius: 32px;
+  box-shadow: 0 40px 80px -20px rgba(0, 0, 0, 0.45);
+  padding: 32px 54px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  z-index: 1;
+}
+.slide:before {
+  content: "";
+  position: absolute;
+  right: -50px;
+  top: -50px;
+  width: 320px;
+  height: 320px;
+  background-image: radial-gradient(var(--blue) 1.5px, transparent 1.5px);
+  background-size: 20px 20px;
+  opacity: 0.12;
+  pointer-events: none;
+}
+.slide:after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 6px;
+  background: linear-gradient(90deg, var(--blue), var(--cyan), #38bdf8);
+}
+.topline {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  color: #475569;
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  position: relative;
+  z-index: 2;
+  border-bottom: 1.5px solid #f1f5f9;
+  padding-bottom: 8px;
+}
+.kicker {
+  color: var(--blue);
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-size: 16px;
+  margin-bottom: 4px;
+}
+h1 {
+  font-size: 52px;
+  line-height: 1.06;
+  letter-spacing: -0.04em;
+  margin: 0 0 8px;
+  max-width: 1140px;
+  color: var(--ink);
+}
+h2 {
+  font-size: 36px;
+  line-height: 1.12;
+  letter-spacing: -0.03em;
+  margin: 0 0 8px;
+  max-width: 1140px;
+  color: var(--ink);
+}
+h3 {
+  font-size: 20px;
+  margin: 0 0 6px;
+  line-height: 1.25;
+  color: var(--ink);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+p {
+  font-size: 21px;
+  line-height: 1.38;
+  color: var(--muted);
+  margin: 0 0 10px;
+}
+ul {
+  padding-left: 26px;
+  margin: 8px 0;
+  color: var(--muted);
+  font-size: 21px;
+  line-height: 1.4;
+}
+li { margin: 8px 0; }
+strong { color: var(--ink); }
+.subtitle {
+  font-size: 21px;
+  line-height: 1.35;
+  max-width: 1140px;
+  color: #1e293b;
+  font-weight: 500;
+  margin-bottom: 10px;
+}
+.meta {
+  font-size: 18px;
+  color: #334155;
+  line-height: 1.42;
+}
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 999px;
+  padding: 5px 15px;
+  background: var(--pale);
+  color: var(--blue);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  margin-top: 8px;
+  position: relative;
+  z-index: 1;
+}
+.grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+.split-layout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 26px;
+}
+.split-content { flex: 1; }
+.split-visual {
+  width: 270px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 16px;
+}
+.split-visual svg {
+  width: 100%;
+  height: auto;
+  max-height: 225px;
+}
+
+.card {
+  border: 2px solid #cbd5e1;
+  border-left: 6px solid var(--blue);
+  background: linear-gradient(145deg, #ffffff, #f8fafc);
+  border-radius: 16px;
+  padding: 15px 18px;
+  min-height: 100px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  position: relative;
+}
+.card:hover {
+  border-color: var(--cyan);
+  box-shadow: 0 6px 16px rgba(2,132,199,0.18);
+  transform: translateY(-2px);
+}
+.card.selected {
+  border: 2px solid var(--blue);
+  background: #eff6ff;
+  box-shadow: 0 0 0 4px rgba(29,78,216,0.15);
+}
+.card p {
+  font-size: 18.5px;
+  margin: 0;
+  line-height: 1.36;
+  color: #334155;
+}
+.card h3 { font-size: 20px; color: #0f172a; }
+
+.practical-example {
+  display: none;
+  margin-top: 10px;
+  padding: 9px 13px;
+  border-left: 4px solid #0284c7;
+  font-size: 16.5px;
+  line-height: 1.38;
+  color: #0c4a6e;
+  background: #e0f2fe;
+  border-radius: 8px;
+  font-weight: 500;
+  animation: fadeIn 0.3s ease;
+}
+.card.selected .practical-example { display: block; }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-3px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.story-box {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border: 2px solid #fcd34d;
+  border-left: 7px solid #f59e0b;
+  border-radius: 16px;
+  padding: 18px 22px;
+  margin-bottom: 14px;
+}
+.story-box p {
+  color: #78350f;
+  font-size: 21px;
+  font-weight: 500;
+  margin: 0;
+  line-height: 1.42;
+}
+.story-tag {
+  display: inline-block;
+  background: #f59e0b;
+  color: #ffffff;
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 4px 12px;
+  border-radius: 999px;
+  margin-bottom: 8px;
+}
+
+.callout {
+  padding: 14px 18px;
+  border-left: 6px solid var(--cyan);
+  background: #f0f9ff;
+  border-radius: 0 14px 14px 0;
+  font-size: 20px;
+  line-height: 1.38;
+  color: #0c4a6e;
+  margin-top: 10px;
+  font-weight: 600;
+  border-top: 1px solid #bae6fd;
+  border-right: 1px solid #bae6fd;
+  border-bottom: 1px solid #bae6fd;
+}
+.callout.question {
+  border-left-color: var(--blue);
+  background: #eff6ff;
+  color: #1e3a8a;
+  border-color: #bfdbfe;
+}
+.flow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+}
+.flow span {
+  padding: 10px 14px;
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  background: #f8fafc;
+  font-weight: 800;
+  font-size: 18.5px;
+  color: #0f172a;
+}
+.flow b { color: var(--cyan); font-size: 22px; }
+.quote {
+  font-size: 27px;
+  line-height: 1.32;
+  color: #0f172a;
+  font-weight: 700;
+  max-width: 1120px;
+  border-left: 6px solid var(--blue);
+  padding-left: 20px;
+}
+.footer {
+  display: flex;
+  justify-content: space-between;
+  color: #64748b;
+  font-size: 15px;
+  font-weight: 700;
+  z-index: 2;
+  border-top: 1.5px solid #f1f5f9;
+  padding-top: 8px;
+}
+
+/* --- CAPA --- */
+.cover {
+  background: linear-gradient(155deg, #ffffff 0%, #f8fbff 65%, #eff6ff 100%);
+  border: 2.5px solid #93c5fd;
+  color: var(--ink);
+  box-shadow: 0 40px 90px -20px rgba(15, 23, 42, 0.5);
+}
+.cover:before {
+  content: "";
+  position: absolute;
+  right: -30px;
+  top: -30px;
+  width: 360px;
+  height: 360px;
+  background-image: radial-gradient(#2563eb 1.8px, transparent 1.8px);
+  background-size: 18px 18px;
+  opacity: 0.14;
+  pointer-events: none;
+}
+.cover .topline { color: #1e40af; border-bottom-color: #dbeafe; }
+.cover .kicker { color: #1d4ed8; display: inline-flex; align-items: center; gap: 8px; }
+.cover h1 {
+  font-size: 50px;
+  max-width: 1140px;
+  background: linear-gradient(90deg, #0f172a 0%, #1d4ed8 55%, #0284c7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.cover .subtitle { color: #334155; font-size: 22px; }
+.cover .institution {
+  font-size: 14.5px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: #1d4ed8;
+  display: inline-block;
+  background: #eff6ff;
+  padding: 6px 14px;
+  border-radius: 8px;
+  border: 1.5px solid #bfdbfe;
+}
+.cover .meta { color: #334155; font-size: 17.5px; }
+.cover .meta strong { color: #0f172a; }
+.names {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 6px 0;
+  max-width: 740px;
+}
+.names span {
+  background: #f0f6ff;
+  border: 1.5px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 5px 12px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1e3a8a;
+}
+.cover .card {
+  background: #ffffff;
+  border: 2px solid #dbeafe;
+  border-left: 6px solid #1d4ed8;
+}
+.cover .card:hover {
+  border-color: #0284c7;
+  background: #f8fbff;
+  box-shadow: 0 8px 20px rgba(29, 78, 216, 0.14);
+}
+.cover .card.selected {
+  border-color: #1d4ed8;
+  background: #eff6ff;
+  box-shadow: 0 0 0 4px rgba(29, 78, 216, 0.15);
+}
+
+/* QUIZ INTERATIVO DE 5 QUESTÕES */
+.quiz-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.quiz-tab {
+  border: 2px solid var(--line);
+  background: #f8fafc;
+  color: var(--ink);
+  font-weight: 800;
+  font-size: 15px;
+  padding: 6px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.quiz-tab.active {
+  background: var(--blue);
+  border-color: var(--blue);
+  color: #ffffff;
+}
+.quiz-tab.answered-ok {
+  border-color: var(--green);
+  background: #dcfce7;
+  color: #14532d;
+}
+.quiz-qtext {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1.35;
+  margin-bottom: 10px;
+  background: #f8fafc;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border-left: 5px solid var(--cyan);
+}
+.quiz-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.quiz-option {
+  border: 2px solid var(--line);
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: #fff;
+  text-align: left;
+  font-size: 16.5px;
+  font-weight: 600;
+  line-height: 1.32;
+  color: #1e293b;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.quiz-option:hover {
+  border-color: var(--blue);
+  background: #f0f6ff;
+}
+.quiz-option.correct { border-color: var(--green); background: #f0fdf4; color: #14532d; }
+.quiz-option.wrong { border-color: var(--red); background: #fef2f2; color: #7f1d1d; }
+.feedback {
+  min-height: 44px;
+  margin-top: 8px;
+  font-weight: 700;
+  font-size: 16.5px;
+  line-height: 1.35;
+  color: #0f172a;
+}
+
+/* HUD Compacto */
+#hud {
+  position: fixed;
+  left: 12px;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  z-index: 10;
+  pointer-events: none;
+}
+.controls {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 10px;
+  padding: 4px 6px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  backdrop-filter: blur(10px);
+}
+button { font: inherit; }
+.ctrl {
+  border: 0;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  min-width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.36, 1);
+}
+.ctrl.present-square {
+  pointer-events: auto;
+  background: var(--blue);
+  color: #fff;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border-radius: 8px;
+  font-size: 16px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+}
+.ctrl:hover { transform: scale(1.08); background: var(--cyan); filter: brightness(1.2); }
+.ctrl:active { transform: scale(1.02); }
+.ctrl:disabled { opacity: 0.25; cursor: not-allowed; transform: none !important; }
+#counter {
+  font-size: 12px;
+  font-weight: 800;
+  color: #f1f5f9;
+  padding: 0 5px;
+  white-space: nowrap;
+}
+</style>
+</head>
+<body>
+<div id="viewport" aria-label="Apresentação interativa">
+  <div id="canvas">
+    <svg id="connections"></svg>
+  </div>
+</div>
+<div id="hud">
+  <div class="controls">
+    <button class="ctrl" id="prev" title="Slide anterior (←)">←</button>
+    <button class="ctrl" id="next" title="Próximo slide (→)">→</button>
+    <span id="counter">1 / 19</span>
+  </div>
+  <button class="ctrl present-square" id="present" title="Apresentar em tela cheia">⛶</button>
+</div>
+<script>
+const svgCoverProgress = `<svg viewBox="0 0 240 210" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="12" y="12" width="216" height="186" rx="24" fill="#eff6ff" stroke="#bfdbfe" stroke-width="2.5"/>
+  <circle cx="120" cy="105" r="76" fill="#dbeafe" opacity="0.55"/>
+  <rect x="44" y="132" width="26" height="44" rx="6" fill="#93c5fd"/>
+  <rect x="82" y="106" width="26" height="70" rx="6" fill="#3b82f6"/>
+  <rect x="120" y="78" width="26" height="98" rx="6" fill="#1d4ed8"/>
+  <path d="M48 114L92 84L130 56L176 38" stroke="#0284c7" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="48" cy="114" r="6" fill="#ffffff" stroke="#0284c7" stroke-width="3.5"/>
+  <circle cx="92" cy="84" r="6" fill="#ffffff" stroke="#0284c7" stroke-width="3.5"/>
+  <circle cx="130" cy="56" r="6" fill="#ffffff" stroke="#0284c7" stroke-width="3.5"/>
+  <circle cx="176" cy="38" r="8" fill="#10b981" stroke="#ffffff" stroke-width="3"/>
+  <path d="M164 102L198 115V142C198 164 183 180 164 187C145 180 130 164 130 142V115L164 102Z" fill="#0f172a" stroke="#ffffff" stroke-width="3.5"/>
+  <path d="M153 144L161 152L177 135" stroke="#10b981" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>`;
+
+const svgChartCompare = `<svg viewBox="0 0 240 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="16" y="16" width="208" height="188" rx="18" fill="#eff6ff" stroke="#bfdbfe" stroke-width="2"/>
+  <line x1="42" y1="168" x2="204" y2="168" stroke="#64748b" stroke-width="3" stroke-linecap="round"/>
+  <line x1="42" y1="40" x2="42" y2="168" stroke="#64748b" stroke-width="3" stroke-linecap="round"/>
+  <!-- João: 4 -> 7 -->
+  <circle cx="76" cy="126" r="8" fill="#1d4ed8"/>
+  <circle cx="164" cy="84" r="8" fill="#10b981"/>
+  <line x1="76" y1="126" x2="164" y2="84" stroke="#10b981" stroke-width="4.5" stroke-dasharray="6 4"/>
+  <text x="64" y="148" fill="#1e3a8a" font-size="13" font-weight="800">João (4)</text>
+  <text x="148" y="70" fill="#065f46" font-size="13" font-weight="800">João (7)</text>
+  <!-- Pedro: 9 -> 9 -->
+  <circle cx="76" cy="56" r="8" fill="#0284c7"/>
+  <circle cx="164" cy="56" r="8" fill="#0284c7"/>
+  <line x1="76" y1="56" x2="164" y2="56" stroke="#0284c7" stroke-width="4"/>
+  <text x="60" y="42" fill="#0c4a6e" font-size="13" font-weight="800">Pedro (9)</text>
+  <text x="148" y="42" fill="#0c4a6e" font-size="13" font-weight="800">Pedro (9)</text>
+</svg>`;
+
+const svgCycle18 = `<svg viewBox="0 0 240 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="120" cy="110" r="78" stroke="#bae6fd" stroke-width="10"/>
+  <path d="M120 32 A78 78 0 0 1 198 110" stroke="#1d4ed8" stroke-width="10" stroke-linecap="round"/>
+  <path d="M198 110 A78 78 0 0 1 120 188" stroke="#0284c7" stroke-width="10" stroke-linecap="round"/>
+  <path d="M120 188 A78 78 0 0 1 42 110" stroke="#10b981" stroke-width="10" stroke-linecap="round"/>
+  <path d="M42 110 A78 78 0 0 1 120 32" stroke="#f59e0b" stroke-width="10" stroke-linecap="round"/>
+  <rect x="86" y="16" width="68" height="28" rx="14" fill="#1d4ed8"/><text x="120" y="34" text-anchor="middle" fill="#fff" font-size="12" font-weight="800">Objetivo</text>
+  <rect x="166" y="96" width="68" height="28" rx="14" fill="#0284c7"/><text x="200" y="114" text-anchor="middle" fill="#fff" font-size="12" font-weight="800">Evidência</text>
+  <rect x="82" y="176" width="76" height="28" rx="14" fill="#10b981"/><text x="120" y="194" text-anchor="middle" fill="#fff" font-size="12" font-weight="800">Análise</text>
+  <rect x="4" y="96" width="76" height="28" rx="14" fill="#f59e0b"/><text x="42" y="114" text-anchor="middle" fill="#fff" font-size="12" font-weight="800">Intervenção</text>
+</svg>`;
+
+const svgTarget19 = `<svg viewBox="0 0 240 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="110" cy="115" r="76" fill="#eff6ff" stroke="#1d4ed8" stroke-width="4"/>
+  <circle cx="110" cy="115" r="50" fill="#ffffff" stroke="#0284c7" stroke-width="4"/>
+  <circle cx="110" cy="115" r="24" fill="#dbeafe" stroke="#10b981" stroke-width="4"/>
+  <circle cx="110" cy="115" r="8" fill="#10b981"/>
+  <!-- Tiros consistentes mas fora do alvo (alta confiabilidade, baixa validade) -->
+  <circle cx="152" cy="68" r="6" fill="#ef4444"/>
+  <circle cx="164" cy="76" r="6" fill="#ef4444"/>
+  <circle cx="156" cy="84" r="6" fill="#ef4444"/>
+  <text x="110" y="210" text-anchor="middle" fill="#334155" font-size="13" font-weight="800">Alvo = Objetivo de Aprendizagem</text>
+</svg>`;
+
+const svgArduino = `<svg viewBox="0 0 240 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="30" y="40" width="180" height="140" rx="16" fill="#0284c7" stroke="#0f172a" stroke-width="4"/>
+  <rect x="52" y="64" width="64" height="44" rx="6" fill="#0f172a"/>
+  <rect x="136" y="68" width="48" height="36" rx="4" fill="#10b981"/>
+  <circle cx="64" cy="142" r="10" fill="#f59e0b" stroke="#ffffff" stroke-width="2.5"/>
+  <circle cx="96" cy="142" r="10" fill="#ef4444" stroke="#ffffff" stroke-width="2.5"/>
+  <rect x="128" y="132" width="56" height="20" rx="4" fill="#e2e8f0"/>
+  <path d="M52 24V40M72 24V40M92 24V40" stroke="#64748b" stroke-width="4" stroke-linecap="round"/>
+</svg>`;
+
+const slides = [
+/* 1. CAPA — JESIEL (30s) */
+{
+  type:"cover",
+  section:"Glaucio · Slide 1 · Abertura",
+  title:"Como Avaliar o Progresso do Estudante?",
+  subtitle:"Princípios 18, 19 e 20 da Psicologia da Educação: acompanhar a aprendizagem, avaliar com qualidade e interpretar evidências.",
+  body:`<div>
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 20px;">
+      <div>
+        <div class="institution">CPAN-UFMS · LICENCIATURA EM COMPUTAÇÃO · PSICOLOGIA DA EDUCAÇÃO</div>
+        <p class="meta" style="margin-top:8px"><strong>Professora:</strong> Rosimara Silva Correia</p>
+        <p class="meta" style="margin-top:2px"><strong>Integrantes:</strong></p>
+        <div class="names">
+          <span>Jesiel</span>
+          <span>Wellington</span>
+          <span>Glaucio</span>
+          <span>Miguel</span>
+          <span>Miguel</span>
+        </div>
+      </div>
+      <div style="width: 215px; flex-shrink: 0;">${svgCoverProgress}</div>
+    </div>
+    <div class="grid three" style="margin-top: 12px;">
+      <div class="card" data-practical="Princípio 18: Usa evidências durante a aula para ajustar o ensino em tempo real (formativa) e sintetiza etapas (somativa).">
+        <h3>🧭 Princípio 18</h3>
+        <p>Avaliação formativa e somativa com finalidades complementares.</p>
+        <div class="practical-example"></div>
+      </div>
+      <div class="card" data-practical="Princípio 19: Garante que a avaliação meça o objetivo real (validade), seja consistente (confiabilidade) e justa (equidade).">
+        <h3>🎯 Princípio 19</h3>
+        <p>Validade, confiabilidade e justiça nas decisões avaliativas.</p>
+        <div class="practical-example"></div>
+      </div>
+      <div class="card" data-practical="Princípio 20: Exige analisar critérios, contexto e limitações antes de rotular estudantes ou tomar decisões.">
+        <h3>🔎 Princípio 20</h3>
+        <p>Interpretação responsável dos resultados para orientar o ensino.</p>
+        <div class="practical-example"></div>
+      </div>
+    </div>
+  </div>`
+},
+
+/* 2. SITUAÇÃO-PROBLEMA INICIAL — JESIEL (1 min) */
+{
+  section:"Glaucio · Slide 2 · Problematização Inicial",
+  title:"Nota alta é sinônimo de progresso?",
+  subtitle:"Analise os resultados de dois estudantes ao longo de duas etapas do semestre:",
+  body:`<div>
+    <div class="split-layout">
+      <div class="split-content">
+        <div class="grid" style="grid-template-columns: 1fr;">
+          <div class="card" data-practical="João subiu 3 pontos (+75% em relação à nota inicial), demonstrando avanço claro ao longo do percurso.">
+            <h3>📈 Trajetória de João: 4,0 → 7,0</h3>
+            <p>Começou com dificuldades conceituais, mas avançou consistentemente entre as duas avaliações.</p>
+            <div class="practical-example"></div>
+          </div>
+          <div class="card" data-practical="Pedro manteve alto desempenho (9,0), mas sem desafios adequados pode não ter avançado além do que já dominava.">
+            <h3>📊 Trajetória de Pedro: 9,0 → 9,0</h3>
+            <p>Manteve excelente pontuação nas duas etapas, sem alteração numérica no registro.</p>
+            <div class="practical-example"></div>
+          </div>
+        </div>
+      </div>
+      <div class="split-visual">${svgChartCompare}</div>
+    </div>
+    <div class="callout question">❓ Perguntas para a turma: Quem apresentou maior progresso? O que ainda não sabemos sobre esses resultados?</div>
+  </div>`
+},
+
+/* 3. O QUE SIGNIFICA AVALIAR O PROGRESSO? — JESIEL (1 min 30s) */
+{
+  section:"Glaucio · Slide 3 · Conceito Central",
+  title:"O que significa avaliar o progresso?",
+  subtitle:"Avaliar não é apenas atribuir uma nota; é produzir e interpretar evidências para orientar o ensino.",
+  body:`<div>
+    <div class="grid three">
+      <div class="card" data-practical="Exemplo: Realizar um diagnóstico inicial antes de introduzir estruturas de repetição em algoritmos.">
+        <h3>1. Ponto de partida</h3>
+        <p><strong>O que o estudante já sabia</strong> antes de iniciarmos a sequência didática?</p>
+        <div class="practical-example"></div>
+      </div>
+      <div class="card" data-practical="Exemplo: Analisar códigos, explicações orais e resolução de problemas, não apenas uma prova final.">
+        <h3>2. Evidências reais</h3>
+        <p><strong>Que evidências mostram</strong> o que ele efetivamente aprendeu no percurso?</p>
+        <div class="practical-example"></div>
+      </div>
+      <div class="card" data-practical="Exemplo: Reorganizar grupos de estudo ou propor novos desafios para quem já domina o básico.">
+        <h3>3. Próximos passos</h3>
+        <p><strong>O que precisa ser retomado</strong> ou aprofundado nas próximas aulas?</p>
+        <div class="practical-example"></div>
+      </div>
+    </div>
+    <div class="callout">Percurso do seminário: História + Princípio 18 (Wellington) → História + Princípio 19 (Jesiel) → História + Princípio 20 (Miguel) → Caso Arduino (Soraia), Quiz (Wellington) e Encerramento (Jesiel).</div>
+  </div>`
+},
+
+/* 4. HISTÓRIA PARA REFLETIR (PRINCÍPIO 18) — WELLINGTON (1 min) */
+{
+  section:"Wellington · Slide 4 · História para Refletir",
+  title:"A professora que só descobre no final",
+  subtitle:"Leia a situação abaixo antes de discutirmos os conceitos envolvidos:",
+  body:`<div>
+    <div class="story-box">
+      <span class="story-tag">Dilema em Sala de Aula</span>
+      <p>Durante três semanas, uma professora ensina <strong>frações</strong>. Ela explica o conteúdo no quadro, passa listas de exercícios e aplica uma única prova ao final da unidade. Ao corrigir as provas, percebe que <strong>metade da turma confundia numerador e denominador desde a primeira aula</strong>.</p>
+    </div>
+    <div class="grid">
+      <div class="card" data-practical="Sugestões: atividades curtas, perguntas orais ou observação nos primeiros dias já revelariam o erro conceitual.">
+        <h3>⏱️ Momento da percepção</h3>
+        <p><strong>Em que momento</strong> essa dificuldade poderia ter sido percebida pela professora?</p>
+        <div class="practical-example"></div>
+      </div>
+      <div class="card" data-practical="Sugestões: ela poderia retomar o conceito com representações visuais antes de avançar para operações com frações.">
+        <h3>🛠️ Uso da informação</h3>
+        <p><strong>O que a professora poderia ter feito</strong> com essa informação durante as três semanas?</p>
+        <div class="practical-example"></div>
+      </div>
+    </div>
+  </div>`
+},
+
+/* 5. PRINCÍPIO 18: DUAS FINALIDADES — WELLINGTON (1 min) */
+{
+  section:"Wellington · Slide 5 · Princípio 18",
+  title:"Princípio 18: Avaliação Formativa e Somativa",
+  subtitle:"Ambas são necessárias, mas cumprem finalidades pedagógicas distintas.",
+  body:`<div>
+    <div class="grid">
+      <div class="card" data-practical="Atenção: Formativa não é qualquer atividade feita em aula — só é formativa quando as evidências orientam ajustes no ensino.">
+        <h3>🔄 Avaliação Formativa (Durante)</h3>
+        <p>Produz evidências <strong>durante o processo de ensino</strong> para orientar ajustes imediatos na prática docente e na aprendizagem.</p>
+        <div class="practical-example"></div>
+      </div>
+      <div class="card" data-practical="Atenção: Somativa não se resume a prova escrita — pode ser um portfólio, seminário ou protótipo funcional ao fim da etapa.">
+        <h3>📋 Avaliação Somativa (Síntese)</h3>
+        <p>Sintetiza o progresso e o domínio alcançado <strong>em um ponto ou etapa específica</strong> (unidade, bimestre ou curso).</p>
+        <div class="practical-example"></div>
+      </div>
+    </div>
+    <div class="callout">Ponto em comum: tanto a avaliação formativa quanto a somativa precisam ser <strong>válidas, justas, úteis e confiáveis</strong>.</div>
+  </div>`
+},
+
+/* 6. FORMATIVA EM AÇÃO — WELLINGTON (2 min) */
+{
+  section:"Wellington · Slide 6 · Princípio 18 na Prática",
+  title:"Avaliação Formativa em Ação",
+  subtitle:"O intervalo entre coletar evidências e intervir deve ser curto para apoiar o estudante a tempo.",
+  body:`<div>
+    <div class="split-layout">
+      <div class="split-content">
+        <ul>
+          <li><strong>No caso das frações:</strong> Observar estratégias de resolução, analisar o erro entre numerador e denominador, dialogar e reorganizar a explicação.</li>
+          <li><strong>Educação Infantil:</strong> Observar uma brincadeira de contagem para identificar quem já relaciona número e quantidade.</li>
+          <li><strong>Ensino Médio / Computação:</strong> Acompanhar etapas intermediárias de um projeto de software antes da entrega final.</li>
+        </ul>
+      </div>
+      <div class="split-visual">${svgCycle18}</div>
+    </div>
+    <div class="flow"><span>Objetivo claro</span><b>→</b><span>Evidências</span><b>→</b><span>Interpretação</span><b>→</b><span>Feedback / Intervenção rápida</span></div>
+  </div>`
+},
+
+/* 7. SOMATIVA SEM REDUZIR À PROVA — WELLINGTON (2 min) */
+{
+  section:"Wellington · Slide 7 · Princípio 18 na Prática",
+  title:"Avaliação Somativa sem reduzir à prova",
+  subtitle:"Instrumentos variados podem sintetizar o aprendizado ao final de uma etapa.",
+  body:`<div>
+    <div class="grid three">
+      <div class="card" data-practical="Permite verificar a integração de conhecimentos teóricos e práticos desenvolvidos ao longo do bimestre.">
+        <h3>💻 Projeto ou Protótipo</h3>
+        <p>Desenvolvimento de um sistema ou circuito integrando os conteúdos da unidade.</p>
+        <div class="practical-example"></div>
+      </div>
+      <div class="card" data-practical="Permite avaliar capacidade de síntese, argumentação técnica e registro metodológico.">
+        <h3>📑 Relatório ou Portfólio</h3>
+        <p>Registro estruturado das entregas, testes e evolução técnica do estudante.</p>
+        <div class="practical-example"></div>
+      </div>
+      <div class="card" data-practical="Permite verificar domínio conceitual individual em um recorte específico do programa.">
+        <h3>📝 Prova ou Seminário</h3>
+        <p>Síntese formal dos conceitos-chave trabalhados ao término do módulo.</p>
+        <div class="practical-example"></div>
+      </div>
+    </div>
+    <div class="callout question">❓ Reflexão: Que conclusão um resultado somativo permite fazer — e quais conclusões ele <strong>não</strong> permite?</div>
+  </div>`
+},
+
+/* 8. HISTÓRIA PARA REFLETIR (PRINCÍPIO 19) — GLAUCIO (1 min) */
+{
+  section:"Jesiel · Slide 8 · História para Refletir",
+  title:"A prova de programação",
+  subtitle:"Analise o descompasso entre o objetivo da disciplina e o instrumento aplicado:",
+  body:`<div>
+    <div class="story-box">
+      <span class="story-tag">Dilema na Licenciatura em Computação</span>
+      <p>Uma turma de Licenciatura em Computação precisa demonstrar que <strong>sabe resolver problemas por meio de algoritmos</strong>. Na avaliação, porém, o professor aplica uma prova escrita cobrando principalmente a <strong>memorização exata dos nomes de comandos e sintaxe</strong>. Um estudante que estrutura ótimas soluções lógicas esquece alguns nomes e recebe nota baixa.</p>
+    </div>
+    <div class="callout question">❓ Pergunta à turma: Essa prova mostrou realmente o que esse estudante sabe fazer? Qual é a diferença entre o objetivo anunciado e o que foi cobrado?</div>
+  </div>`
+},
+
+/* 9. PRINCÍPIO 19: O QUE UMA AVALIAÇÃO MEDE? — GLAUCIO (1 min 30s) */
+{
+  section:"Jesiel · Slide 9 · Princípio 19",
+  title:"Princípio 19: Validade — estamos medindo o que pretendemos?",
+  subtitle:"Uma prova de memorização não sustenta conclusões sobre capacidade de resolver problemas.",
+  body:`<div>
+    <div class="split-layout">
+      <div class="split-content">
+        <ul>
+          <li><strong>O que é Validade:</strong> Não é um "selo" automático do instrumento, mas um julgamento sobre <strong>as evidências que sustentam a interpretação pretendida</strong>.</li>
+          <li><strong>Alinhamento ao objetivo:</strong> Se o objetivo é lógica algorítmica, exigir sintaxe decorada distorce a inferência sobre o estudante.</li>
+          <li><strong>Adequação ao público:</strong> A validade depende do propósito e da população avaliada.</li>
+        </ul>
+      </div>
+      <div class="split-visual">${svgTarget19}</div>
+    </div>
+    <div class="callout">Pergunta-chave da validade: As evidências coletadas realmente autorizam a conclusão que estou tirando?</div>
+  </div>`
+},
+
+/* 10. CONFIABILIDADE E QUALIDADE — GLAUCIO (1 min 30s) */
+{
+  section:"Jesiel · Slide 10 · Princípio 19",
+  title:"Confiabilidade: consistência nos resultados",
+  subtitle:"Dois professores avaliam o mesmo projeto de software, mas atribuem notas muito diferentes.",
+  body:`<div>
+    <div class="grid">
+      <div class="card" data-practical="Exemplo: Sem rubrica, um avaliador foca só no visual da interface e outro só na organização do código.">
+        <h3>⚖️ O que a divergência revela?</h3>
+        <p>Ausência de critérios explícitos e variações subjetivas comprometem a consistência da avaliação.</p>
+        <div class="practical-example"></div>
+      </div>
+      <div class="card" data-practical="Exemplo: Definir rubricas claras com pesos para lógica, legibilidade, testes e documentação.">
+        <h3>📏 Como aumentar a confiabilidade?</h3>
+        <p>Rubricas claras, condições adequadas de aplicação e instrumentos bem estruturados reduzem erros aleatórios.</p>
+        <div class="practical-example"></div>
+      </div>
+    </div>
+    <div class="callout">Cuidado conceitual: Um instrumento pode ser <strong>confiável</strong> (consistente), mas ainda assim <strong>não ser válido</strong> (medir a coisa errada).</div>
+  </div>`
+},
+
+/* 11. JUSTIÇA E EQUIDADE — GLAUCIO (2 min) */
+{
+  section:"Jesiel · Slide 11 · Princípio 19",
+  title:"Justiça e Equidade na Avaliação",
+  subtitle:"Condições idênticas são sempre condições justas?",
+  body:`<div>
+    <div class="grid three">
+      <div class="card" data-practical="Exemplo: Permitir leitor de tela para estudante com deficiência visual em uma prova de lógica de programação.">
+        <h3>♿ Barreiras alheias</h3>
+        <p>Fatores irrelevantes ao objetivo (como acessibilidade ou formato) não podem distorcer a nota.</p>
+        <div class="practical-example"></div>
+      </div>
+      <div class="card" data-practical="Exemplo: Combinar código comentado, apresentação oral e teste prático para captar diferentes formas de expressão.">
+        <h3>🎭 Múltiplas formas</h3>
+        <p>Estudantes demonstram aprendizagem por meios distintos sem reduzir o rigor do objetivo.</p>
+        <div class="practical-example"></div>
+      </div>
+      <div class="card" data-practical="Exemplo: Equidade mantém o mesmo objetivo de aprendizagem para todos, ajustando o acesso para que todos possam demonstrá-lo.">
+        <h3>⚖️ Equidade ≠ Facilitação</h3>
+        <p>Não é abandonar objetivos, mas garantir justiça em relação ao que se pretende medir.</p>
+        <div class="practical-example"></div>
+      </div>
+    </div>
+  </div>`
+},
+
+/* 12. HISTÓRIA PARA REFLETIR (PRINCÍPIO 20) — Miguel (1 min) */
+{
+  section:"Miguel · Slide 12 · História para Refletir",
+  title:"A nota que virou diagnóstico apressado",
+  subtitle:"Leia a reação do professor diante de um alto índice de erro na turma:",
+  body:`<div>
+    <div class="story-box">
+      <span class="story-tag">Dilema na Interpretação</span>
+      <p>Após uma prova, <strong>70% da turma erra a mesma questão</strong>. O professor conclui imediatamente que os estudantes "não estudaram" e decide aplicar uma prova ainda mais difícil na semana seguinte. Uma colega sugere verificar antes <strong>se o enunciado estava claro, se o tópico foi realmente ensinado e se avaliava o objetivo correto</strong>.</p>
+    </div>
+    <div class="callout question">❓ Pergunta à turma: Qual decisão é mais responsável antes de concluir que a turma não aprendeu? Que outras evidências devemos olhar?</div>
+  </div>`
+},
+
+/* 13. PRINCÍPIO 20: O RESULTADO NÃO FALA SOZINHO — Miguel (1 min 30s) */
+{
+  section:"Miguel · Slide 13 · Princípio 20",
+  title:"Princípio 20: O resultado não fala sozinho",
+  subtitle:"Retomando João (4 → 7) e Pedro (9 → 9): números exigem contexto e critérios.",
+  body:`<div>
+    <div class="grid">
+      <div class="card" data-practical="Sem saber o objetivo da unidade, não sabemos se a nota 7 de João já atinge o domínio esperado.">
+        <h3>🎯 1. Qual era o objetivo?</h3>
+        <p>O resultado precisa ser lido à luz da finalidade da avaliação e do que se esperava que fosse aprendido.</p>
+        <div class="practical-example"></div>
+      </div>
+      <div class="card" data-practical="Se a primeira prova foi diagnóstica e a segunda foi um projeto prático, a comparação direta exige cautela.">
+        <h3>📐 2. Instrumentos e critérios</h3>
+        <p>Os instrumentos eram comparáveis? Quais critérios e níveis de exigência foram utilizados?</p>
+        <div class="practical-example"></div>
+      </div>
+      <div class="card" data-practical="Fatores como tempo de prova, ansiedade, saúde ou acesso a materiais podem interferir em um recorte pontual.">
+        <h3>🌍 3. Contexto do estudante</h3>
+        <p>Que fatores externos ou pedagógicos podem ter influenciado o desempenho naquele momento?</p>
+        <div class="practical-example"></div>
+      </div>
+      <div class="card" data-practical="Usar a nota para punir em vez de orientar o replanejamento gera exclusão e desmotivação.">
+        <h3>🚦 4. Consequências do uso</h3>
+        <p>As decisões tomadas a partir dos dados devem favorecer novas oportunidades de aprendizagem.</p>
+        <div class="practical-example"></div>
+      </div>
+    </div>
+  </div>`
+},
+
+/* 14. COMPARAÇÕES E CRITÉRIOS — Miguel (2 min) */
+{
+  section:"Miguel · Slide 14 · Princípio 20",
+  title:"Comparar entre estudantes ou com critérios?",
+  subtitle:"A referência escolhida muda completamente a conclusão pedagógica.",
+  body:`<div>
+    <div class="grid">
+      <div class="card" data-practical="Risco: Estar acima da média da turma não significa que o aluno dominou o conteúdo; estar abaixo não significa incapacidade.">
+        <h3>👥 Referência Normativa (Entre pares)</h3>
+        <p>Compara o desempenho de um estudante com o restante da turma.<br><strong>Limite:</strong> Informa posição no grupo, mas não o domínio real do conteúdo.</p>
+        <div class="practical-example"></div>
+      </div>
+      <div class="card" data-practical="Vantagem: Permite saber exatamente quais habilidades já foram consolidadas e quais precisam de apoio.">
+        <h3>✅ Referência Critériada (Padrões claros)</h3>
+        <p>Compara as evidências do estudante com <strong>objetivos e critérios previamente definidos</strong>.<br><strong>Força:</strong> Mostra o que ele já sabe fazer e o que falta avançar.</p>
+        <div class="practical-example"></div>
+      </div>
+    </div>
+    <div class="callout">Boa prática: Explicitar critérios, rubricas e modelos de resposta para que estudantes compreendam o padrão esperado.</div>
+  </div>`
+},
+
+/* 15. DA INTERPRETAÇÃO À DECISÃO — Miguel (1 min) */
+{
+  section:"Miguel · Slide 15 · Princípio 20",
+  title:"Da interpretação à decisão pedagógica",
+  subtitle:"Interpretar evidências só faz sentido quando orienta a ação docente.",
+  body:`<div>
+    <div class="flow">
+      <span>1. Objetivo</span><b>→</b>
+      <span>2. Evidências</span><b>→</b>
+      <span>3. Análise crítica</span><b>→</b>
+      <span>4. Decisão pedagógica</span><b>→</b>
+      <span>5. Nova oportunidade</span>
+    </div>
+    <div class="grid three" style="margin-top: 16px;">
+      <div class="card" data-practical="Exemplo: Explicar novamente laços de repetição usando analogias visuais ou fluxogramas.">
+        <h3>🔄 Ajustar o ensino</h3>
+        <p>Retomar um conceito-chave ou mudar a estratégia didática usada em aula.</p>
+        <div class="practical-example"></div>
+      </div>
+      <div class="card" data-practical="Exemplo: Apontar exatamente onde ocorreu o erro lógico no código, em vez de apenas marcar um 'X'.">
+        <h3>💬 Feedback formativo</h3>
+        <p>Oferecer devolutiva específica que ajude o estudante a revisar seu raciocínio.</p>
+        <div class="practical-example"></div>
+      </div>
+      <div class="card" data-practical="Exemplo: Reescrever uma questão ambígua ou propor uma entrevista técnica complementar.">
+        <h3>🔍 Revisar o instrumento</h3>
+        <p>Corrigir falhas na questão ou buscar novas evidências antes de fechar o conceito.</p>
+        <div class="practical-example"></div>
+      </div>
+    </div>
+  </div>`
+},
+
+/* 16. CASO INTEGRADOR: PROJETO COM ARDUINO — Soraia (2 min) */
+{
+  section:"Soraia · Slide 16 · Caso Integrador",
+  title:"Caso Integrador: Projeto com Arduino",
+  subtitle:"Em uma prática de Computação Física, três estudantes apresentam resultados distintos:",
+  body:`<div>
+    <div class="split-layout">
+      <div class="split-content">
+        <div class="grid" style="grid-template-columns: 1fr; gap: 10px;">
+          <div class="card" data-practical="Evidência: Domina eletrônica básica e montagem física, mas precisa de apoio na lógica de programação.">
+            <h3>🔌 Ana: Circuito montado, dificuldade no código</h3>
+            <p>Conectou corretamente sensores e resistores na protoboard, mas travou na programação.</p>
+            <div class="practical-example"></div>
+          </div>
+          <div class="card" data-practical="Evidência: Compreende o funcionamento teórico e o fluxo do sistema, faltando tempo ou suporte na execução.">
+            <h3>🗣️ Bruno: Não concluiu, mas explicou o circuito</h3>
+            <p>O protótipo não ficou pronto no tempo da aula, mas ele explicou com clareza o funcionamento lógico.</p>
+            <div class="practical-example"></div>
+          </div>
+          <div class="card" data-practical="Evidência: O produto final funciona, mas pode ter sido copiado sem compreensão real do algoritmo.">
+            <h3>⚙️ Carlos: Concluiu, mas não explicou o código</h3>
+            <p>Entregou o projeto funcionando perfeitamente, porém não soube justificar as linhas de código.</p>
+            <div class="practical-example"></div>
+          </div>
+        </div>
+      </div>
+      <div class="split-visual">${svgArduino}</div>
+    </div>
+    <div class="callout question">❓ Pergunta: Que evidências adicionais seriam necessárias antes de julgar a aprendizagem de cada um?</div>
+  </div>`
+},
+
+/* 17. DISCUSSÃO DO CASO — Soraia (1 min) */
+{
+  section:"Soraia · Slide 17 · Articulando os Princípios",
+  title:"Como os Princípios 18, 19 e 20 iluminam o caso?",
+  subtitle:"Um produto final isolado não revela todo o conhecimento nem as habilidades desenvolvidas.",
+  body:`<div>
+    <div class="grid three">
+      <div class="card" data-practical="Se o professor acompanhasse as etapas em aula, ajudaria Ana no código e notaria as dúvidas de Carlos antes da entrega.">
+        <h3>🧭 Princípio 18 (Processo)</h3>
+        <p><strong>Acompanhar o percurso:</strong> Observar montagem, testes e depuração durante a aula, não só a entrega final.</p>
+        <div class="practical-example"></div>
+      </div>
+      <div class="card" data-practical="Rubrica clara: separar critérios de montagem física, lógica do algoritmo, depuração, explicação oral e colaboração.">
+        <h3>🎯 Princípio 19 (Qualidade)</h3>
+        <p><strong>Critérios válidos e justos:</strong> Avaliar cada dimensão prevista no objetivo (lógica, montagem, explicação) com consistência.</p>
+        <div class="practical-example"></div>
+      </div>
+      <div class="card" data-practical="Decisão: Propor arguição breve para Carlos, feedback de código para Ana e tempo/apoio de montagem para Bruno.">
+        <h3>🔎 Princípio 20 (Interpretação)</h3>
+        <p><strong>Interpretar com cautela:</strong> Reconhecer os limites de cada evidência e planejar intervenções específicas para cada aluno.</p>
+        <div class="practical-example"></div>
+      </div>
+    </div>
+  </div>`
+},
+
+/* 18. QUIZ DE ANÁLISE (5 QUESTÕES) — MIGUEL (5 min) */
+{
+  section:"Wellington · Slide 18 · Quiz de Análise",
+  title:"Quiz de Análise Pedagógica",
+  subtitle:"Escolha uma alternativa e justifique por que ela é mais defensável que as concorrentes:",
+  body:`<div id="quiz-container">
+    <div class="quiz-tabs" id="quiz-tabs"></div>
+    <div class="quiz-qtext" id="quiz-qtext"></div>
+    <div class="quiz-options" id="quiz-options"></div>
+    <div class="feedback" id="quiz-feedback"></div>
+  </div>`
+},
+
+/* 19. SÍNTESE E ENCERRAMENTO — MIGUEL (30s) */
+{
+  type:"cover",
+  section:"Jesiel · Slide 19 · Síntese e Encerramento",
+  title:"Síntese e Encerramento",
+  subtitle:"Princípios 18, 19 e 20 · Psicologia da Educação · CPAN-UFMS",
+  body:`<div>
+    <div class="quote" style="margin: 10px 0 14px;">“Avaliar é produzir evidências, interpretá-las com responsabilidade e decidir como favorecer a aprendizagem.”</div>
+    <div class="callout question" style="margin-bottom: 14px;">💬 Pergunta final para reflexão: Se a avaliação revela que muitos estudantes não aprenderam, que aspectos do <strong>ensino</strong> e do <strong>instrumento</strong> o professor também precisa examinar?</div>
+    <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 14px; padding: 12px 16px; font-size: 16px; color: #334155;">
+      <strong>Referência:</strong> COMISSÃO PROFISSIONAL PARA A PSICOLOGIA NAS ESCOLAS E NA EDUCAÇÃO. <em>Os 20 princípios mais importantes da Psicologia para o ensino e aprendizagem de estudantes da Educação Infantil, Ensino Fundamental e Ensino Médio</em>. Seção "Como avaliar o progresso do estudante?", princípios 18, 19 e 20, p. 29–31.
+    </div>
+  </div>`
+}
+];
+
+const quizData = [
+  {
+    q: "1. Um professor aplica uma atividade curta durante uma sequência didática. Ao analisar as respostas, percebe que boa parte da turma confunde dois conceitos e decide alterar a aula seguinte. Qual interpretação é mais consistente com o Princípio 18?",
+    options: [
+      "A) A atividade é formativa porque ocorreu durante a aula, independentemente do uso que o professor faça dos resultados.",
+      "B) A atividade assume função formativa porque as evidências foram interpretadas e usadas para orientar ajustes no ensino.",
+      "C) A atividade é somativa porque produziu respostas que podem ser registradas e comparadas entre estudantes.",
+      "D) A atividade só seria formativa se não gerasse nota e fosse realizada individualmente."
+    ],
+    correct: 1,
+    explanation: "Gabarito B: O caráter formativo não depende apenas do momento ou do formato da atividade; o elemento decisivo é o uso das evidências para orientar o ensino e a aprendizagem."
+  },
+  {
+    q: "2. Uma prova de programação apresenta resultados muito semelhantes quando aplicada em condições equivalentes, mas cobra apenas memorização de nomes de comandos, embora o objetivo seja resolver problemas por meio de algoritmos. Qual análise é mais adequada?",
+    options: [
+      "A) A consistência dos resultados é suficiente para demonstrar que a prova avalia adequadamente a competência pretendida.",
+      "B) A prova pode apresentar confiabilidade, mas há dúvidas sobre a validade das interpretações relativas à resolução de problemas.",
+      "C) A prova é válida porque os conteúdos cobrados pertencem ao campo da programação, ainda que não correspondam ao objetivo.",
+      "D) A prova deixa de ser confiável porque utiliza questões de memorização em vez de atividades práticas."
+    ],
+    correct: 1,
+    explanation: "Gabarito B: A consistência dos resultados diz respeito à confiabilidade. A validade exige evidências de que as interpretações feitas são apropriadas ao objetivo pretendido."
+  },
+  {
+    q: "3. Uma escola utiliza um único teste padronizado (feito para comparar uma habilidade específica) para diagnosticar dificuldades em todo o componente curricular e decidir apoio pedagógico. À luz dos princípios 19 e 20, qual decisão é mais defensável?",
+    options: [
+      "A) Manter o uso, pois um instrumento padronizado pode fundamentar decisões diferentes quando aplicado a todos os estudantes.",
+      "B) Ampliar a interpretação, desde que a média da turma seja considerada junto com a nota individual.",
+      "C) Limitar as conclusões ao propósito para o qual há evidências e reunir outras fontes antes de decisões mais amplas.",
+      "D) Substituir a nota por uma classificação em níveis, pois categorias reduzem o risco de interpretações equivocadas."
+    ],
+    correct: 2,
+    explanation: "Gabarito C: Um teste válido para um propósito não é automaticamente válido para outro. É preciso interpretar conforme a questão investigada e reunir múltiplas evidências."
+  },
+  {
+    q: "4. Em um projeto de robótica, dois professores avaliam o mesmo protótipo: um atribui nota alta porque funcionou; outro atribui nota baixa porque o estudante não explicou o código. Qual encaminhamento melhor articula os princípios 19 e 20?",
+    options: [
+      "A) Escolher a nota do professor com maior experiência, pois a experiência individual compensa diferenças de julgamento.",
+      "B) Calcular a média das duas notas, pois a combinação de avaliações elimina a divergência entre critérios.",
+      "C) Definir previamente os objetivos e critérios, verificar se representam as aprendizagens pretendidas e interpretar as evidências à luz desses critérios.",
+      "D) Manter as duas notas separadas, pois avaliações diferentes não devem compartilhar critérios quando envolvem projetos."
+    ],
+    correct: 2,
+    explanation: "Gabarito C: Critérios explícitos e alinhados aos objetivos favorecem avaliações consistentes (confiabilidade e validade), e a interpretação deve considerar o que se pretendia avaliar."
+  },
+  {
+    q: "5. Após uma avaliação, 70% da turma erra uma questão. O professor conclui que os estudantes não estudaram e decide aplicar uma prova mais difícil. Qual seria a resposta profissional mais fundamentada?",
+    options: [
+      "A) Aceitar a conclusão, pois uma proporção elevada de erros é evidência suficiente de falta de estudo.",
+      "B) Rever a questão, o objetivo de aprendizagem, as condições de aplicação e as respostas; depois decidir se é necessário retomar o ensino ou ajustar o instrumento.",
+      "C) Descartar toda a avaliação, pois um item com muitos erros invalida necessariamente os demais resultados.",
+      "D) Comparar os estudantes com melhor e pior desempenho e usar essa diferença para definir quem precisa de recuperação."
+    ],
+    correct: 1,
+    explanation: "Gabarito B: Muitos erros podem indicar dificuldades conceituais, problema de clareza ou alinhamento da questão, ou necessidade de rever o ensino. Os dados sozinhos não provam falta de estudo."
+  }
+];
+
+const layout = [
+  /* Glaucio (1-3) */
+  {x:0, y:0, s:1.03},
+  {x:1850, y:0, s:1},
+  {x:3700, y:0, s:1},
+  /* Wellington - Princípio 18 (4-7) */
+  {x:5550, y:-580, s:1},
+  {x:7400, y:-580, s:1},
+  {x:9250, y:-580, s:1},
+  {x:11100, y:-580, s:1},
+  /* Jesiel - Princípio 19 (8-11) */
+  {x:12950, y:200, s:1},
+  {x:14800, y:200, s:1},
+  {x:16650, y:200, s:1},
+  {x:18500, y:200, s:1},
+  /* Miguel - Princípio 20 (12-15) */
+  {x:20350, y:-580, s:1},
+  {x:22200, y:-580, s:1},
+  {x:24050, y:-580, s:1},
+  {x:25900, y:-580, s:1},
+  /* Miguel (16-17), Wellington (18), Jesiel (19) */
+  {x:27750, y:0, s:1},
+  {x:29600, y:0, s:1},
+  {x:31450, y:0, s:1},
+  {x:33300, y:0, s:1.03}
+];
+
+const canvas = document.getElementById("canvas");
+const svgConnections = document.getElementById("connections");
+
+slides.forEach((sl, i) => {
+  const pos = layout[i];
+  const el = document.createElement("section");
+  el.className = "slide" + (sl.type === "cover" ? " cover" : "");
+  el.style.setProperty("--x", pos.x + "px");
+  el.style.setProperty("--y", pos.y + "px");
+  el.innerHTML = `
+    <div class="topline"><span>${sl.section}</span><span class="pill">${i + 1} / ${slides.length}</span></div>
+    <div>
+      ${sl.type === "cover" ? `<div class="kicker">Psicologia da Educação · Princípios 18, 19 e 20</div><h1>${sl.title}</h1>` : `<h2>${sl.title}</h2>`}
+      ${sl.subtitle ? `<p class="subtitle">${sl.subtitle}</p>` : ""}
+      ${sl.body}
+    </div>
+    <div class="footer"><span>CPAN-UFMS · Licenciatura em Computação</span><span>Como Avaliar o Progresso do Estudante?</span></div>
+  `;
+  canvas.appendChild(el);
+});
+
+const offset = 3000;
+let svgMarkup = "";
+for (let i = 0; i < layout.length - 1; i++) {
+  const a = layout[i];
+  const b = layout[i + 1];
+  const x1 = a.x + 640 + offset;
+  const y1 = a.y + 360 + offset;
+  const x2 = b.x + 640 + offset;
+  const y2 = b.y + 360 + offset;
+  const mx = (x1 + x2) / 2;
+  svgMarkup += `<path d="M ${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}" fill="none" stroke="rgba(56,189,248,0.24)" stroke-width="10" stroke-linecap="round" />`;
+}
+svgConnections.style.transform = `translate(-${offset}px, -${offset}px)`;
+svgConnections.innerHTML = svgMarkup;
+
+/* Renderização do Quiz Interativo */
+let currentQ = 0;
+const solvedQ = new Set();
+
+function renderQuiz(qIdx) {
+  currentQ = qIdx;
+  const tabsEl = document.getElementById("quiz-tabs");
+  const qtextEl = document.getElementById("quiz-qtext");
+  const optsEl = document.getElementById("quiz-options");
+  const fbEl = document.getElementById("quiz-feedback");
+  if (!tabsEl) return;
+
+  tabsEl.innerHTML = quizData.map((_, idx) => {
+    const cls = ["quiz-tab"];
+    if (idx === currentQ) cls.push("active");
+    if (solvedQ.has(idx)) cls.push("answered-ok");
+    return `<button class="${cls.join(" ")}" data-qidx="${idx}">Questão ${idx + 1}${solvedQ.has(idx) ? " ✓" : ""}</button>`;
+  }).join("");
+
+  const item = quizData[currentQ];
+  qtextEl.textContent = item.q;
+  optsEl.innerHTML = item.options.map((opt, oIdx) =>
+    `<button class="quiz-option" data-oidx="${oIdx}">${opt}</button>`
+  ).join("");
+  fbEl.textContent = "Selecione uma alternativa e peça a um colega que justifique o raciocínio.";
+}
+renderQuiz(0);
+
+const slideEls = [...document.querySelectorAll(".slide")];
+let current = 0;
+
+function focusSlide(index) {
+  current = Math.max(0, Math.min(slides.length - 1, index));
+  const pos = layout[current];
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const isFull = !!document.fullscreenElement;
+  const margin = isFull ? 0 : 48;
+  const fit = Math.min((vw - margin) / 1280, (vh - margin) / 720);
+  const scale = isFull ? fit : fit * (pos.s || 1);
+  const cx = pos.x + 640;
+  const cy = pos.y + 360;
+  const tx = vw / 2 - cx * scale;
+  const ty = vh / 2 - cy * scale;
+  canvas.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+
+  slideEls.forEach((el, idx) => {
+    el.style.opacity = idx === current ? "1" : (isFull ? "0" : "0.18");
+    el.style.borderRadius = isFull ? "0px" : "28px";
+    el.style.borderWidth = isFull ? "0px" : "2px";
+  });
+
+  document.getElementById("counter").textContent = `${current + 1} / ${slides.length}`;
+  document.getElementById("prev").disabled = current === 0;
+  document.getElementById("next").disabled = current === slides.length - 1;
+}
+
+document.getElementById("prev").addEventListener("click", () => focusSlide(current - 1));
+document.getElementById("next").addEventListener("click", () => focusSlide(current + 1));
+
+document.getElementById("present").addEventListener("click", () => {
+  if (!document.fullscreenElement) {
+    document.documentElement.requestFullscreen?.();
+  } else {
+    document.exitFullscreen?.();
+  }
+});
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "ArrowRight" || e.key === "PageDown" || e.key === " ") {
+    e.preventDefault();
+    focusSlide(current + 1);
+  }
+  if (e.key === "ArrowLeft" || e.key === "PageUp") {
+    e.preventDefault();
+    focusSlide(current - 1);
+  }
+  if (e.key === "Home") focusSlide(0);
+  if (e.key === "End") focusSlide(slides.length - 1);
+  if (e.key.toLowerCase() === "f") {
+    if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+    else document.exitFullscreen?.();
+  }
+});
+
+document.addEventListener("click", (e) => {
+  const card = e.target.closest(".card");
+  if (card && card.hasAttribute("data-practical")) {
+    const exampleBox = card.querySelector(".practical-example");
+    if (exampleBox && !exampleBox.textContent) {
+      exampleBox.textContent = card.getAttribute("data-practical");
+    }
+    card.classList.toggle("selected");
+    return;
+  }
+
+  const tab = e.target.closest(".quiz-tab");
+  if (tab) {
+    renderQuiz(Number(tab.dataset.qidx));
+    return;
+  }
+
+  const opt = e.target.closest(".quiz-option");
+  if (opt) {
+    const item = quizData[currentQ];
+    const chosen = Number(opt.dataset.oidx);
+    const options = [...document.querySelectorAll(".quiz-option")];
+    options.forEach(o => o.classList.remove("correct", "wrong"));
+    const ok = chosen === item.correct;
+    opt.classList.add(ok ? "correct" : "wrong");
+    const fbEl = document.getElementById("quiz-feedback");
+    if (ok) {
+      solvedQ.add(currentQ);
+      fbEl.style.color = "#14532d";
+      fbEl.textContent = "✓ " + item.explanation;
+      const activeTab = document.querySelector(`.quiz-tab[data-qidx="${currentQ}"]`);
+      if (activeTab) {
+        activeTab.classList.add("answered-ok");
+        activeTab.textContent = `Questão ${currentQ + 1} ✓`;
+      }
+    } else {
+      fbEl.style.color = "#991b1b";
+      fbEl.textContent = "✗ Não é a alternativa mais defensável. Discuta por que ela parece plausível, mas falha diante do princípio.";
+    }
+  }
+});
+
+window.addEventListener("resize", () => focusSlide(current));
+document.addEventListener("fullscreenchange", () => setTimeout(() => focusSlide(current), 100));
+focusSlide(0);
+</script>
+</body>
+</html>
