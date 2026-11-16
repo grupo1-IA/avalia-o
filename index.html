@@ -52,7 +52,7 @@ html, body {
   position: absolute;
   top: 0;
   left: 0;
-  width: 45000px;
+  width: 50000px;
   height: 10000px;
   pointer-events: none;
   z-index: 0;
@@ -294,6 +294,132 @@ strong { color: var(--ink); }
   padding: 4px 12px;
   border-radius: 999px;
   margin-bottom: 8px;
+}
+
+/* --- ESTILOS ESPECÍFICOS PARA LEITURA, VÍDEO E TABELA --- */
+.reading-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 6px;
+}
+.reading-panel {
+  background: linear-gradient(180deg, #fffbeb 0%, #fef9c3 100%);
+  border: 2px solid #fde047;
+  border-left: 6px solid #d97706;
+  border-radius: 16px;
+  padding: 15px 18px;
+}
+.reading-panel.dialogue {
+  background: linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 2px solid #cbd5e1;
+  border-left: 6px solid var(--blue);
+}
+.reading-panel p {
+  font-size: 15.8px;
+  line-height: 1.38;
+  color: #1e293b;
+  margin: 0 0 8px;
+}
+.reading-panel p:last-child { margin-bottom: 0; }
+
+.video-stage {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin-top: 6px;
+}
+.video-frame {
+  flex: 1.35;
+  background: #0f172a;
+  border: 2px solid #1e293b;
+  border-radius: 18px;
+  padding: 10px;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.25);
+}
+.video-frame video {
+  width: 100%;
+  height: 365px;
+  border-radius: 12px;
+  background: #000000;
+  display: block;
+}
+.video-guide {
+  flex: 0.85;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.time-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #eff6ff;
+  border: 2px solid #93c5fd;
+  color: #1e3a8a;
+  font-weight: 800;
+  font-size: 16px;
+  padding: 8px 14px;
+  border-radius: 12px;
+}
+.btn-clip {
+  border: 0;
+  background: var(--blue);
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 15.5px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: 0.2s;
+  box-shadow: 0 4px 12px rgba(29, 78, 216, 0.25);
+}
+.btn-clip:hover { background: var(--cyan); }
+
+.debate-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin-top: 8px;
+  border: 2px solid #cbd5e1;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
+}
+.debate-table th {
+  padding: 14px 20px;
+  font-size: 19px;
+  font-weight: 800;
+  text-align: left;
+  color: #ffffff;
+}
+.debate-table th:first-child {
+  background: linear-gradient(90deg, #1d4ed8, #2563eb);
+  width: 50%;
+}
+.debate-table th:last-child {
+  background: linear-gradient(90deg, #0f172a, #1e293b);
+  width: 50%;
+}
+.debate-table td {
+  padding: 15px 20px;
+  font-size: 18px;
+  line-height: 1.38;
+  color: #1e293b;
+  border-top: 1.5px solid #e2e8f0;
+  vertical-align: middle;
+}
+.debate-table td:first-child {
+  background: #f8fbff;
+  border-right: 1.5px solid #cbd5e1;
+  font-weight: 500;
+}
+.debate-table td:last-child {
+  background: #ffffff;
+  font-weight: 500;
+}
+.debate-table tr:hover td {
+  background: #eff6ff;
 }
 
 .callout {
@@ -574,7 +700,7 @@ button { font: inherit; }
   <div class="controls">
     <button class="ctrl" id="prev" title="Slide anterior (←)">←</button>
     <button class="ctrl" id="next" title="Próximo slide (→)">→</button>
-    <span id="counter">1 / 19</span>
+    <span id="counter">1 / 22</span>
   </div>
   <button class="ctrl present-square" id="present" title="Apresentar em tela cheia">⛶</button>
 </div>
@@ -739,7 +865,7 @@ const slides = [
         <div class="practical-example"></div>
       </div>
     </div>
-    <div class="callout">Percurso do seminário: História + Princípio 18 (Wellington) → História + Princípio 19 (Jesiel) → História + Princípio 20 (Miguel) → Caso Arduino (Soraia), Quiz (Wellington) e Encerramento (Jesiel).</div>
+    <div class="callout">Percurso do seminário: História + Princípio 18 (Wellington) → História + Princípio 19 (Jesiel) → História + Princípio 20 (Miguel) → Caso Arduino (Soraia), Leitura & Vídeo, Quiz e Encerramento.</div>
   </div>`
 },
 
@@ -1077,9 +1203,94 @@ const slides = [
   </div>`
 },
 
-/* 18. QUIZ DE ANÁLISE (5 QUESTÕES) — MIGUEL (5 min) */
+/* 18. LEITURA: A REDAÇÃO DO PEDRINHO */
 {
-  section:"Wellington · Slide 18 · Quiz de Análise",
+  section:"Estudo de Caso · Slide 18 · Leitura",
+  title:"Leitura: A redação do Pedrinho",
+  subtitle:"Acompanhe a história e observe como critérios, nota e intervenção pedagógica se articulam:",
+  body:`<div>
+    <div class="reading-grid">
+      <div class="reading-panel">
+        <p>Certo dia, a professora solicitou aos alunos que escrevessem uma redação sobre três frutas: <strong>abacaxi, mamão e manga</strong>, apresentando características, comparando sabores e explicando sua importância para uma alimentação saudável.</p>
+        <p>Pedrinho fez sua redação com capricho: boa ortografia, pontuação adequada e ideias coerentes. Entretanto, escreveu de maneira geral sobre frutas, sem desenvolver os três elementos solicitados. Ao corrigir, a professora observou a qualidade da escrita, mas percebeu que ele não compreendeu o objetivo da proposta, atribuindo-lhe <strong>nota 7</strong>.</p>
+        <p>Indignada, a mãe foi à escola: <em>“Meu filho escreveu uma redação tão bem feita, sem erros e com letra bonita. Por que recebeu apenas 7?”</em></p>
+      </div>
+      <div class="reading-panel dialogue">
+        <p><strong>Professora:</strong> <em>“Ele demonstrou domínio da escrita, mas não atendeu ao objetivo. Não se trata apenas de perder pontos: a nota é um registro, mas minha responsabilidade é compreender o que Pedrinho já aprendeu e o que ainda precisa desenvolver.”</em></p>
+        <p>No dia seguinte, a professora conversou com Pedrinho, identificou sua dificuldade em interpretar os elementos centrais do enunciado e propôs uma <strong>nova atividade orientada</strong>. Juntos, releram a proposta, destacaram as três frutas e ele reescreveu o texto.</p>
+        <p>Percebendo dificuldades semelhantes na turma, ela retomou a interpretação de comandos com todos. <strong>Avaliar não é apenas dar nota, mas acompanhar e promover a aprendizagem.</strong></p>
+      </div>
+    </div>
+  </div>`
+},
+
+/* 19. DOCUMENTÁRIO: PRO DIA NASCER FELIZ */
+{
+  section:"Análise Audiovisual · Slide 19 · Documentário",
+  title:"Documentário: Pro Dia Nascer Feliz",
+  subtitle:"Assista ao trecho do conselho de classe (25:10 a 29:17) e observe os critérios usados para decidir a aprovação:",
+  body:`<div>
+    <div class="video-stage">
+      <div class="video-frame">
+        <video id="doc-video" controls preload="metadata" src="documentário.mp4#t=1510,1757"></video>
+      </div>
+      <div class="video-guide">
+        <div class="time-badge">🎬 Trecho: 25:10 – 29:17 (4 min 07 s)</div>
+        <button class="btn-clip" id="btn-play-clip">▶ Reproduzir trecho (25:10 → 29:17)</button>
+        <div class="card" data-practical="Observe: Os professores mencionam ausência anterior, gestos obscenos e 'mudança de atitude' como justificativa para aprovar.">
+          <h3>👀 O que observar na cena?</h3>
+          <p>Quais argumentos sustentam a decisão de aprovar o estudante na disciplina de História?</p>
+          <div class="practical-example"></div>
+        </div>
+        <div class="card" data-practical="Ao final, o próprio estudante admite não ter aprendido o conteúdo da matéria na qual foi aprovado pelo conselho.">
+          <h3>⚖️ Evidência vs. Decisão</h3>
+          <p>Há evidências de aprendizagem do conteúdo ou a aprovação funciona como prêmio/solução?</p>
+          <div class="practical-example"></div>
+        </div>
+      </div>
+    </div>
+  </div>`
+},
+
+/* 20. TABELA DE DEBATE: PEDRINHO VS. DOCUMENTÁRIO */
+{
+  section:"Debate Coletivo · Slide 20 · Comparação Crítica",
+  title:"Conexão entre a história do Pedrinho e o documentário",
+  subtitle:"Compare as duas práticas avaliativas à luz dos Princípios 18, 19 e 20:",
+  body:`<div>
+    <table class="debate-table">
+      <thead>
+        <tr>
+          <th>📖 História do Pedrinho</th>
+          <th>🎥 Documentário Pro Dia Nascer Feliz</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>A professora identifica o que o aluno aprendeu e o que ainda precisa aprender.</td>
+          <td>O conselho discute a aprovação sem evidências suficientes de aprendizagem.</td>
+        </tr>
+        <tr>
+          <td>A avaliação orienta novas intervenções pedagógicas.</td>
+          <td>A avaliação é utilizada para justificar uma decisão de aprovação.</td>
+        </tr>
+        <tr>
+          <td>Os critérios de avaliação precisam estar relacionados aos objetivos de aprendizagem.</td>
+          <td>O comportamento do estudante interfere na decisão sobre seu desempenho acadêmico.</td>
+        </tr>
+        <tr>
+          <td>A nota não encerra o processo avaliativo.</td>
+          <td>A aprovação acaba sendo tratada como solução para o problema.</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="callout question">💬 Debate com a turma: Em qual das duas situações a avaliação cumpre papel formativo, válido e ético? Por quê?</div>
+  </div>`
+},
+
+/* 21. QUIZ DE ANÁLISE (5 QUESTÕES) — WELLINGTON */
+{
+  section:"Wellington · Slide 21 · Quiz de Análise",
   title:"Quiz de Análise Pedagógica",
   subtitle:"Escolha uma alternativa e justifique por que ela é mais defensável que as concorrentes:",
   body:`<div id="quiz-container">
@@ -1090,10 +1301,10 @@ const slides = [
   </div>`
 },
 
-/* 19. SÍNTESE E ENCERRAMENTO — MIGUEL (30s) */
+/* 22. SÍNTESE E ENCERRAMENTO — JESIEL */
 {
   type:"cover",
-  section:"Jesiel · Slide 19 · Síntese e Encerramento",
+  section:"Jesiel · Slide 22 · Síntese e Encerramento",
   title:"Síntese e Encerramento",
   subtitle:"Princípios 18, 19 e 20 · Psicologia da Educação · CPAN-UFMS",
   body:`<div>
@@ -1184,11 +1395,16 @@ const layout = [
   {x:22200, y:-580, s:1},
   {x:24050, y:-580, s:1},
   {x:25900, y:-580, s:1},
-  /* Miguel (16-17), Wellington (18), Jesiel (19) */
+  /* Soraia - Caso Arduino (16-17) */
   {x:27750, y:0, s:1},
   {x:29600, y:0, s:1},
-  {x:31450, y:0, s:1},
-  {x:33300, y:0, s:1.03}
+  /* Novos Slides: Pedrinho (18), Documentário (19), Tabela Debate (20) */
+  {x:31450, y:420, s:1},
+  {x:33300, y:420, s:1},
+  {x:35150, y:420, s:1},
+  /* Quiz (21) e Encerramento (22) */
+  {x:37000, y:0, s:1},
+  {x:38850, y:0, s:1.03}
 ];
 
 const canvas = document.getElementById("canvas");
@@ -1227,6 +1443,24 @@ for (let i = 0; i < layout.length - 1; i++) {
 svgConnections.style.transform = `translate(-${offset}px, -${offset}px)`;
 svgConnections.innerHTML = svgMarkup;
 
+/* Controle do trecho do vídeo (25:10 = 1510s até 29:17 = 1757s) */
+const CLIP_START = 1510;
+const CLIP_END = 1757;
+const docVideo = document.getElementById("doc-video");
+const btnPlayClip = document.getElementById("btn-play-clip");
+
+if (docVideo && btnPlayClip) {
+  btnPlayClip.addEventListener("click", () => {
+    docVideo.currentTime = CLIP_START;
+    docVideo.play();
+  });
+  docVideo.addEventListener("timeupdate", () => {
+    if (docVideo.currentTime >= CLIP_END && !docVideo.paused) {
+      docVideo.pause();
+    }
+  });
+}
+
 /* Renderização do Quiz Interativo */
 let currentQ = 0;
 const solvedQ = new Set();
@@ -1259,6 +1493,9 @@ const slideEls = [...document.querySelectorAll(".slide")];
 let current = 0;
 
 function focusSlide(index) {
+  if (docVideo && current === 18 && index !== 18) {
+    docVideo.pause();
+  }
   current = Math.max(0, Math.min(slides.length - 1, index));
   const pos = layout[current];
   const vw = window.innerWidth;
@@ -1360,3 +1597,10 @@ focusSlide(0);
 </script>
 </body>
 </html>
+```
+
+Atualizei o arquivo `index.html` com os três novos slides inseridos logo após o slide 17 (totalizando agora 22 slides):
+
+- **Slide 18 — Leitura: A redação do Pedrinho**: Texto completo organizado em dois painéis lado a lado para leitura em sala.
+- **Slide 19 — Documentário: Pro Dia Nascer Feliz**: Player `<video>` apontando diretamente para `documentário.mp4#t=1510,1757` (25:10 a 29:17), com botão para iniciar no ponto exato, pausa automática ao atingir 29:17 e ao trocar de slide, além de dois cards interativos com perguntas orientadoras.
+- **Slide 20 — Conexão entre a história do Pedrinho e o documentário**: Tabela comparativa extraída do arquivo `tabela.docx` acompanhada de questão disparadora para o debate com a turma.
